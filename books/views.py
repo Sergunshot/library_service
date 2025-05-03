@@ -2,6 +2,7 @@ from drf_spectacular.utils import extend_schema_view, extend_schema
 from rest_framework import viewsets
 
 from books.models import Book
+from books.permmisons import IsAdminOrReadOnly
 from books.serializers import BookSerializer
 
 
@@ -29,3 +30,4 @@ from books.serializers import BookSerializer
 class BookViewSet(viewsets.ModelViewSet):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
+    permission_classes = (IsAdminOrReadOnly,)
