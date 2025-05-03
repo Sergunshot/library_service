@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "drf_spectacular",
     "books",
+    "users"
 ]
 
 MIDDLEWARE = [
