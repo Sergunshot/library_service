@@ -42,3 +42,6 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
         if data.inventory < 1:
             raise serializers.ValidationError("The book cannot be borrowed: inventory=0.")
         return data
+
+
+
