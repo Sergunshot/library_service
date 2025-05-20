@@ -8,8 +8,8 @@ class Borrowing(models.Model):
     borrow_date = models.DateField(auto_now_add=True)
     expected_return_date = models.DateField()
     actual_return_date = models.DateField(null=True, blank=True)
-    book = ForeignKey(Book, on_delete=models.CASCADE, related_name='borrowings')
-    user = ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='borrowings')
+    book = ForeignKey(Book, on_delete=models.CASCADE, related_name="borrowings")
+    user = ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name="borrowings")
 
     class Meta:
         constraints = [
