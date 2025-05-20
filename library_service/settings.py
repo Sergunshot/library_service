@@ -42,7 +42,9 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "books",
     "users",
-    "borrowing"
+    "borrowing",
+    "payments",
+    "payments.apps.PaymentsConfig",
 ]
 
 MIDDLEWARE = [
