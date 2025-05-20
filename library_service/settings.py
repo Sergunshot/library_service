@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     "books",
     "users",
     "borrowing",
-    "payments"
+    "payments",
+    "payments.apps.PaymentsConfig",
 ]
 
 MIDDLEWARE = [
