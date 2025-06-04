@@ -1,13 +1,12 @@
-from datetime import datetime
-
 from django.db.transaction import atomic
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from rest_framework.relations import SlugRelatedField, StringRelatedField
+from rest_framework.relations import SlugRelatedField
 
 from books.serializers import BookSerializer
 from borrowing.models import Borrowing
 from payments.models import Payment
+from payments.stripe_payment import create_stripe_session
 
 
 class BorrowingSerializer(serializers.ModelSerializer):
@@ -77,6 +76,17 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
         Borrowing.book_borrowing(book)
 
         borrowing = Borrowing.objects.create(**validated_data)
+        request = self.context.get("request")
+        borrowing_days = borrowing.get_borrowing_days()
+        borrowing_price = borrowing.get_price()
+
+        create_stripe_session(
+            borrowing,
+            request,
+            Payment.TypeChoices.PAYMENT,
+            borrowing_price,
+            borrowing_days,
+        )
 
         return borrowing
 
@@ -103,4 +113,15 @@ class BorrowingReturnSerializer(serializers.ModelSerializer):
     @atomic
     def update(self, instance, validated_data):
         instance.return_book()
+
+        if instance.actual_return_date.date() > instance.expected_return_date.date():
+            request = self.context["request"]
+
+            overdue_days = instance.get_overdue_days()
+            overdue_price = instance.get_overdue_price()
+
+            create_stripe_session(
+                instance, request, Payment.TypeChoices.FINE, overdue_price, overdue_days
+            )
+
         return instance
