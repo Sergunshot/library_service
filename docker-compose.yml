@@ -23,7 +23,7 @@ services:
     image: postgres:16.0-alpine3.17
     restart: always
     ports:
-      - "5432:5432"
+      - "5433:5432"
     env_file:
       - .env
     volumes:
