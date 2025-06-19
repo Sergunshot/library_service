@@ -116,7 +116,7 @@ AUTH_USER_MODEL = "users.User"
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "Europe/Kyiv"
+TIME_ZONE = "Europe/Warsaw"
 
 USE_I18N = True
 

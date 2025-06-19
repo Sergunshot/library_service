@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 import stripe
 from django.urls import reverse
 from rest_framework.request import Request
@@ -11,16 +13,14 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
 def create_stripe_session(
-    borrowing: Borrowing, request: Request
+    borrowing: Borrowing,
+    request: Request,
+    payment_type: Payment.Type,
+    price: Decimal,
+    days: int,
 ) -> stripe.checkout.Session:
-    price = borrowing.get_price()
-    borrowing_days = borrowing.get_borrowing_days()
-    success_url = request.build_absolute_uri(
-        reverse("payment:payment-success", args=[borrowing.id])
-    )
-    cancel_url = request.build_absolute_uri(
-        reverse("payment:payment-cancel", args=[borrowing.id])
-    )
+    success_url = request.build_absolute_uri(reverse("payment:payment-success"))
+    cancel_url = request.build_absolute_uri(reverse("payment:payment-cancel"))
 
     session = stripe.checkout.Session.create(
         line_items=[
@@ -28,10 +28,10 @@ def create_stripe_session(
                 "price_data": {
                     "currency": "usd",
                     "product_data": {
-                        "name": f"Borrowing book: '{borrowing.book.title}'",
+                        "name": f"{payment_type} fee for book: '{borrowing.book.title}'",
                         "description": f"User '{borrowing.user.email}' "
-                        f"borrowing book '{borrowing.book}' "
-                        f"for '{borrowing_days}' days.",
+                        f"book detail '{borrowing.book}' "
+                        f"for '{days}' days.",
                     },
                     "unit_amount": int(price * 100),
                 },
@@ -39,17 +39,17 @@ def create_stripe_session(
             }
         ],
         mode="payment",
-        success_url=success_url,
+        success_url=success_url + "?session_id={CHECKOUT_SESSION_ID}",
         cancel_url=cancel_url,
     )
 
     Payment.objects.update_or_create(
         borrowing=borrowing,
+        type=payment_type,
         defaults={
             "session_url": session.url,
             "session_id": session.id,
             "money_to_pay": price,
-            "type": Payment.TypeChoices.PAYMENT,
             "status": "Pending",
         },
     )

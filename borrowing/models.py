@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
@@ -48,12 +48,12 @@ class Borrowing(models.Model):
     def return_book(self) -> None:
         self.book.inventory += 1
         self.book.save()
-        self.actual_return_date = datetime.today()
+        self.actual_return_date = date.today()
         self.save()
 
     def get_borrowing_days(self) -> int:
-        last_date = self.expected_return_date.date()
-        first_date = self.borrow_date.date()
+        last_date = self.expected_return_date
+        first_date = self.borrow_date
 
         return (last_date - first_date).days
 
@@ -61,8 +61,8 @@ class Borrowing(models.Model):
         return self.get_borrowing_days() * self.book.daily_fee
 
     def get_overdue_days(self) -> int:
-        actual_return_date = self.actual_return_date.date()
-        expected_return_date = self.expected_return_date.date()
+        actual_return_date = self.actual_return_date
+        expected_return_date = self.expected_return_date
 
         return (actual_return_date - expected_return_date).days
 
