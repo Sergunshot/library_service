@@ -146,13 +146,13 @@ class AuthenticatedBorrowingApiTests(TestCase):
             ).first()
 
             overdue_days = (
-                    updated_borrowing.actual_return_date
-                    - updated_borrowing.expected_return_date
+                updated_borrowing.actual_return_date
+                - updated_borrowing.expected_return_date
             ).days
             overdue_price = (
-                    overdue_days
-                    * updated_borrowing.book.daily_fee
-                    * Decimal(FINE_MULTIPLIER)
+                overdue_days
+                * updated_borrowing.book.daily_fee
+                * Decimal(FINE_MULTIPLIER)
             )
 
             self.assertEqual(res.status_code, status.HTTP_200_OK)
