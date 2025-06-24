@@ -43,8 +43,8 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
         pending_payment = Payment.objects.filter(
             borrowing__user=user,
             status__in=(
-                Payment.StatusChoices.PENDING,
-                Payment.StatusChoices.EXPIRED,
+                Payment.Status.PENDING,
+                Payment.Status.EXPIRED,
             ),
         ).first()
 
@@ -83,9 +83,9 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
         create_stripe_session(
             borrowing,
             request,
-            Payment.TypeChoices.PAYMENT,
-            borrowing_price,
-            borrowing_days,
+            payment_type=Payment.Type.PAYMENT,
+            days=borrowing_days,
+            price=borrowing_price,
         )
 
         return borrowing
@@ -114,14 +114,16 @@ class BorrowingReturnSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         instance.return_book()
 
-        if instance.actual_return_date.date() > instance.expected_return_date.date():
+        if instance.actual_return_date > instance.expected_return_date:
             request = self.context["request"]
-
             overdue_days = instance.get_overdue_days()
             overdue_price = instance.get_overdue_price()
 
             create_stripe_session(
-                instance, request, Payment.TypeChoices.FINE, overdue_price, overdue_days
+                borrowing=instance,
+                request=request,
+                payment_type=Payment.Type.FINE,
+                days=overdue_days,
+                price=overdue_price
             )
-
         return instance

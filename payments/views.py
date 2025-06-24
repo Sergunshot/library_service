@@ -59,17 +59,17 @@ class PaymentViewSet(viewsets.ModelViewSet):
         payment = get_object_or_404(
             Payment,
             session_id=request.GET.get("session_id"),
-            status=Payment.StatusChoices.PENDING,
-            type=Payment.TypeChoices.PAYMENT,
+            status=Payment.Status.PENDING,
+            type=Payment.Type.PAYMENT,
         )
         session = stripe.checkout.Session.retrieve(session_id)
 
         if session.get("payment_status") == "paid":
             data = {
-                "status": Payment.StatusChoices.PAID,
-                "type": Payment.TypeChoices.PAYMENT,
+                "status": Payment.Status.PAID,
+                "type": Payment.Type.PAYMENT,
             }
-            serializer = self.get_serializer(payment, data=data)
+            serializer = self.get_serializer(payment, data=data, partial=True)
 
             if serializer.is_valid():
                 serializer.save()
@@ -80,8 +80,8 @@ class PaymentViewSet(viewsets.ModelViewSet):
                     f"Borrowing details:\n"
                     f"book: {payment.borrowing.book} "
                     f"user: {payment.borrowing.user}\n"
-                    f"borrow date: {payment.borrowing.borrow_date.date()}\n"
-                    f"expected return date: {payment.borrowing.expected_return_date.date()}"
+                    f"borrow date: {payment.borrowing.borrow_date}\n"
+                    f"expected return date: {payment.borrowing.expected_return_date}"
                 )
                 send_message(message)
 
@@ -115,21 +115,21 @@ class PaymentViewSet(viewsets.ModelViewSet):
     def renew_session(self, request, pk=None):
         user = request.user
         payment = Payment.objects.filter(
-            status=Payment.StatusChoices.EXPIRED, borrowing__user=user
+            status=Payment.Status.EXPIRED, borrowing__user=user
         ).first()
 
         if payment:
             days = payment.borrowing.get_borrowing_days()
-            if payment.type == Payment.TypeChoices.FINE:
+            if payment.type == Payment.Type.FINE:
                 days = payment.borrowing.get_overdue_days()
 
             new_session = create_stripe_session(
-                payment.borrowing, request, payment.type, payment.money_to_pay, days
+                payment.borrowing, request, payment.type, days
             )
 
             payment.session_url = new_session.url
             payment.session_id = new_session.id
-            payment.status = Payment.StatusChoices.PENDING
+            payment.status = Payment.Status.PENDING
             payment.save()
 
             borrowing_data = BorrowingSerializer(payment.borrowing).data
